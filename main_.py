@@ -1,14 +1,18 @@
 import sys
-sys.path.append('/users/asus/appdata/local/programs/python/python38/lib/site-packages')
+#sys.path.append('/users/asus/appdata/local/programs/python/python38/lib/site-packages')
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.fft
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, models
-from PIL import Image
+from PIL import Image as Image_PIL
+from PIL import ImageTk
 import os
 from tqdm import tqdm
+import tkinter as tk
+from tkinter import *
+from tkinter import filedialog 
 
 # define dataset class 
 class AIDataset(Dataset):
@@ -31,7 +35,7 @@ class AIDataset(Dataset):
         return len(self.image_paths)
 
     def __getitem__(self, idx):
-        img = Image.open(self.image_paths[idx]).convert('RGB')
+        img = Image_PIL.open(self.image_paths[idx]).convert('RGB')
         if self.transform:
             img = self.transform(img)
         return img, self.labels[idx]
@@ -161,15 +165,11 @@ def prepare_input(img_path):
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-    
-    img = Image.open(img_path).convert('RGB')
-    x = transform(img).unsqueeze(0) # Add batch dimension [1, 3, 224, 224]
 
-    #TODO: add all operations 
-    freq = get_fft_features(x)
-    resid = get_pixel_residuals(x)
+    img = Image_PIL.open(img_path).convert('RGB')
+    x = transform(img).unsqueeze(0) # Vráti [1, 3, 512, 512]
 
-    return torch.cat([x, freq, resid], dim=1)
+    return x
 
 
 def test_prediction(image_path, model_path):
@@ -185,21 +185,76 @@ def test_prediction(image_path, model_path):
 
     with torch.no_grad():
         probability = model(input_tensor).item()
-
+    
     print(f"\n--- vysledok pre: {image_path} ---")
     print(f"AI Probability: {probability * 100:.2f}%")
-    
+    global dispaly_verdict
+    outcome = ""
     if probability > 0.5: #rozhodovacia hranica
-        print("Verdict: AI GENERATED")
+        outcome = "Verdict: AI GENERATED"
+        dispaly_verdict = tk.Label(window, text=outcome, fg="red", font=15)
     else:
-        print("Verdict: REAL PHOTOGRAPH")
+        outcome = "Verdict: REAL PHOTOGRAPH"
+        dispaly_verdict = tk.Label(window, text=outcome, fg="green", font=15)
+    print(outcome)
+    text_out = str(f"AI Probability: {probability * 100:.2f}%")
+    
+    global dispaly_probability 
+    
+    dispaly_probability = tk.Label(window, text=text_out)
+    dispaly_verdict.pack()
+    dispaly_probability.pack()
+    
 
-if __name__ == "__main__":
-    TRAIN = 1 # 1 = trenovanie, 0 = testovanie
+    window.mainloop()
+
+
+test_image = ""
+
+def openFile():
+    file = (filedialog.askopenfilename(
+        filetypes=[("Image files", "*.jpg *.jpeg *.png *.gif *.bmp")]
+                                      ))
+    print(file)
+    global test_image 
+    test_image = file
+
+    im = Image_PIL.open(test_image)
+    im = im.resize((400, 300))
+    tkimage = ImageTk.PhotoImage(im)
+    global myvar
+    myvar=Label(window,image = tkimage)
+    myvar.image = tkimage
+    myvar.pack()
+    window.mainloop()
+    
+    return file
+
+def print_test_path():
+    print("test path:" + test_image)
+
+def test_new_image():
+    myvar.destroy()
+    dispaly_probability.destroy()
+    dispaly_verdict.destroy()
+
+if __name__ in {"__main__", "__mp_main__"}:
+    TRAIN = 0 # 1 = trenovanie, 0 = testovanie
     model_path="ai_detector_weights.pth"
-    test_image = "csst/dataset/test_images/20250423_142232.jpg" # Update this!
+    #test_image = "C:/Users/Asus/Documents/Leto25_26/Nový priečinok/AI_image_detectot/dataset/test_images/not_raw.jpg" # Update this!
+    
 
     if TRAIN == 1:
         main()
     else: 
-        test_prediction(test_image, model_path)
+        path = "C:/Users/Asus/Documents/Leto25_26/Nový priečinok/"
+        window = Tk()
+        window.title("AI tester")
+        window.geometry('500x500')
+        button_open = Button(text="Open image", command=openFile, height = 2, width = 15).pack()
+        print(test_image)
+        #button_path = Button(text="path", command=lambda : print_test_path()).pack()
+        button_test = Button(text="Test Image", command=lambda : test_prediction(test_image, model_path), height = 2, width = 15).pack()
+        button_restart = Button(text="restart", command= lambda : test_new_image(), height = 2, width = 15).pack()
+        window.mainloop()
+        
