@@ -87,74 +87,6 @@ class ArtifactDetector(nn.Module):
 
 # --- Trenovanie ---
 
-def run_epoch_new(model, loader, criterion, optimizer, device, phase):
-    if phase == 'train':
-        model.train()
-    else:
-        model.eval()
-
-    running_loss = 0.0
-    running_corrects = 0
-    pbar = tqdm(loader, desc=f"{phase.capitalize()}", leave=False)
-
-    for images, labels in pbar:
-        images = images.to(device)
-        labels = labels.to(device).float().view(-1, 1)
-
-        if phase == 'train':
-            # --- PUZZLE MIX START ---
-            # 1. Enable gradients for input to get Saliency
-            images.requires_grad = True
-            temp_outputs = model(images)
-            temp_loss = criterion(temp_outputs, labels)
-            temp_loss.backward(retain_graph=True)
-            
-            # 2. Get saliency (absolute gradient)
-            saliency = images.grad.abs().mean(dim=1, keepdim=True)
-            images.requires_grad = False
-            optimizer.zero_grad()
-
-            # 3. Create the Mix (Shuffle the batch to pair images)
-            indices = torch.randperm(images.size(0))
-            images_shuffled = images[indices]
-            labels_shuffled = labels[indices]
-            
-            # 4. Binary Mask Creation (Simplified Puzzle Logic)
-            # We swap 4x4 or 8x8 patches where the second image has higher saliency
-            mask = (saliency < saliency[indices]).float()
-            
-            # Apply the mix
-            mixed_images = images * (1 - mask) + images_shuffled * mask
-            
-            # 5. Calculate the mixed label lambda
-            # lambda is the proportion of the 'shuffled' image in the mix
-            lam = mask.mean()
-            
-            # Forward pass with mixed data
-            outputs = model(mixed_images)
-            
-            # Soft Loss: mix of both original and shuffled labels
-            loss = lam * criterion(outputs, labels_shuffled) + (1 - lam) * criterion(outputs, labels)
-            # --- PUZZLE MIX END ---
-            
-            loss.backward()
-            optimizer.step()
-            preds = (outputs > 0.5).float()
-        else:
-            # Standard Evaluation Logic
-            with torch.no_grad():
-                outputs = model(images)
-                loss = criterion(outputs, labels)
-                preds = (outputs > 0.5).float()
-
-        running_loss += loss.item() * images.size(0)
-        running_corrects += torch.sum(preds == labels.data)
-        pbar.set_postfix(loss=f"{loss.item():.4f}")
-
-    epoch_loss = running_loss / len(loader.dataset)
-    epoch_acc = running_corrects.double() / len(loader.dataset)
-    return epoch_loss, epoch_acc
-
 # this is coppyed funcion I am not shure how exactli does it work 
 def run_epoch(model, loader, criterion, optimizer, device, phase):
     if phase == 'train': #trenovanie
@@ -211,7 +143,7 @@ def main():
     trenovaci_dataset = AIDataset(TRAINING_DATASET, transform=data_transforacia)
     loader = DataLoader(trenovaci_dataset, batch_size=32, shuffle=True)
     pouzivam = "cpu"
-    epoch_num = 1
+    epoch_num = 5
     model = ArtifactDetector().to(torch.device(pouzivam)) 
     # bude sa trenovať na CPU alebo GPU, ak je "cuda" zmen 
     #TODO: change to "cuda" if available 
@@ -309,7 +241,7 @@ def test_new_image():
 
 if __name__ in {"__main__", "__mp_main__"}:
     TRAIN = 0 # 1 = trenovanie, 0 = testovanie
-    model_path="ai_detector_weights.pth"
+    model_path="ai_detector_weights_new.pth"
     #test_image = "C:/Users/Asus/Documents/Leto25_26/Nový priečinok/AI_image_detectot/dataset/test_images/not_raw.jpg" # Update this!
     
 
