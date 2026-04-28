@@ -113,7 +113,7 @@ def evaluate_folder(folder_path, model_path):
 
 if __name__ == "__main__":
     # TU NASTAV SVOJE CESTY
-    FOLDER_TO_TEST = "testingPicsAI"
+    FOLDER_TO_TEST = "mixDataset/fake"
     MODEL_WEIGHTS = "ai_detector_weights_new.pth"
 
     evaluate_folder(FOLDER_TO_TEST, MODEL_WEIGHTS)

@@ -9,12 +9,12 @@ from tqdm import tqdm
 
 def puzzle_mix_folder():
     # --- Nastavenia ---
-    path_real = 'dataset/train/real'
-    path_fake = 'dataset/train/fake'
-    output_dir = 'dataset/train/mixed'
+    path_real = 'mixDataset/real'
+    path_fake = 'mixDataset/fake'
+    output_dir = 'mixDataset/mixed'
 
     num_images = 2000  # Počet obrázkov na spracovanie
-    grid_size = 64  # Hustota "puzzle" mriežky
+    grid_size = 8  # Hustota "puzzle" mriežky
     img_size = 1024  # Rozlíšenie
 
     os.makedirs(output_dir, exist_ok=True)

@@ -128,7 +128,7 @@ def run_epoch(model, loader, criterion, optimizer, device, phase):
 # --- Main funkcia --- train
 def main():
     #data na trenovanie a validaciu
-    TRAINING_DATASET = 'dataset/train'
+    TRAINING_DATASET = 'mixDataset'
     VALIDATION_DATASET = 'dataset/val'
     # priprava dat
     data_transforacia = transforms.Compose([
@@ -143,7 +143,7 @@ def main():
     trenovaci_dataset = AIDataset(TRAINING_DATASET, transform=data_transforacia)
     loader = DataLoader(trenovaci_dataset, batch_size=32, shuffle=True)
     pouzivam = "cpu"
-    epoch_num = 5
+    epoch_num = 2
     model = ArtifactDetector().to(torch.device(pouzivam)) 
     # bude sa trenovať na CPU alebo GPU, ak je "cuda" zmen 
     #TODO: change to "cuda" if available 
@@ -151,7 +151,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
     criterion = nn.BCELoss()
 
-    print(f"training on {len(trenovaci_dataset)} images... \nThis may take a minute")
+    print(f"\ntraining on {len(trenovaci_dataset)} images... \nThis may take a minute")
     for epoch in range(epoch_num):
         trening_loss, trening_accuracy = run_epoch(model, loader, criterion,  optimizer, torch.device(pouzivam), 'train')
         print(f"Epoch {epoch+1}/{epoch_num} | Loss: {trening_loss:.4f} | Acc: {trening_accuracy:.4f}")
@@ -205,7 +205,7 @@ def test_prediction(image_path, model_path):
     dispaly_probability = tk.Label(window, text=text_out)
     dispaly_verdict.pack()
     dispaly_probability.pack()
-    
+
 
     window.mainloop()
 
@@ -243,7 +243,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     TRAIN = 0 # 1 = trenovanie, 0 = testovanie
     model_path="ai_detector_weights_new.pth"
     #test_image = "C:/Users/Asus/Documents/Leto25_26/Nový priečinok/AI_image_detectot/dataset/test_images/not_raw.jpg" # Update this!
-    
+
 
     if TRAIN == 1:
         main()
