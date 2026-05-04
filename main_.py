@@ -241,7 +241,7 @@ def test_new_image():
 
 if __name__ in {"__main__", "__mp_main__"}:
     TRAIN = 0 # 1 = trenovanie, 0 = testovanie
-    model_path="ai_detector_weights_new.pth"
+    model_path="5K_5epoch.pth"
     #test_image = "C:/Users/Asus/Documents/Leto25_26/Nový priečinok/AI_image_detectot/dataset/test_images/not_raw.jpg" # Update this!
 
 
